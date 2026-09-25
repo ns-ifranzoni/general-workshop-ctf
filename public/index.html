@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/netskope_favicon.png" />
+  <title>Workshop CTF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css?v=1.0.0" />
+  <link rel="stylesheet" href="/css/responsive.css?v=1.0.0" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-shell">
+    <section class="login-brief" aria-label="Workshop overview">
+      <div class="login-logo">
+        <img id="login-logo-img" src="/img/netskope-logo-dark.png" alt="Netskope" />
+      </div>
+      <h1>
+        <span data-workshop-name>Workshop CTF</span>
+        <span class="login-title-subline">Capture the Flag</span>
+      </h1>
+      <p>Hands-on challenges: investigate, find the flag and climb the leaderboard.</p>
+
+      <div class="login-signal-grid" aria-label="Workshop status">
+        <div class="login-signal-card login-signal-card--active">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>Format</span>
+            <strong>CTF</strong>
+          </span>
+        </div>
+        <div class="login-signal-card">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6"/><path d="M9 13h4"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>Registration</span>
+            <strong id="login-reg-status">—</strong>
+          </span>
+        </div>
+        <div class="login-signal-card">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>CTF status</span>
+            <strong id="login-ctf-status">—</strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="login-telemetry-panel" aria-label="Live lab telemetry">
+        <div class="telemetry-header">
+          <span>Live lab telemetry</span>
+          <span id="telemetry-ts">—</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-dot telemetry-dot--ok"></span>
+          <span>Participants</span>
+          <code id="telemetry-participants">—</code>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-dot telemetry-dot--ok"></span>
+          <span>Challenges</span>
+          <code id="telemetry-challenges">—</code>
+        </div>
+        <div class="telemetry-row telemetry-row--ranking">
+          <span class="telemetry-dot telemetry-dot--ok" id="telemetry-top-dot"></span>
+          <span>Ranking</span>
+          <div id="telemetry-top" class="telemetry-ranking">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-card" aria-label="Access form">
+      <div class="login-card-kicker">Workshop access</div>
+
+      <!-- Login form -->
+      <div id="login-form-panel">
+        <h2 data-i18n="login_title">Sign in</h2>
+        <p data-i18n="login_subtitle">Enter your username and password to access the lab.</p>
+        <div class="form-group">
+          <label for="login-username-input" data-i18n="login_username">Username</label>
+          <input type="text" id="login-username-input" placeholder="your-username" autocomplete="username" autocapitalize="off" maxlength="32" />
+        </div>
+        <div class="form-group">
+          <label for="login-password-input" data-i18n="login_password">Password</label>
+          <input type="password" id="login-password-input" placeholder="••••••" autocomplete="current-password" maxlength="32" />
+        </div>
+        <button class="btn-primary" id="login-btn" type="button" onclick="handleLogin()">
+          <span data-i18n="login_btn">Login</span>
+        </button>
+        <div class="login-error" id="login-error"></div>
+        <div class="login-switch-row">
+          <span data-i18n="login_no_account">No account yet?</span>
+          <button class="btn-link" type="button" onclick="showRegisterPanel()" data-i18n="login_register_link">Register here</button>
+        </div>
+      </div>
+
+      <!-- Register form -->
+      <div id="register-form-panel" style="display:none;">
+        <h2 data-i18n="register_title">Create account</h2>
+        <p data-i18n="register_subtitle">Register with your username, password and the workshop registration code.</p>
+        <div class="form-group">
+          <label for="reg-username-input" data-i18n="login_username">Username</label>
+          <input type="text" id="reg-username-input" placeholder="5–8 characters" autocomplete="username" autocapitalize="off" minlength="5" maxlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="reg-password-input" data-i18n="login_password">Password</label>
+          <input type="password" id="reg-password-input" placeholder="5–8 characters" autocomplete="new-password" minlength="5" maxlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="reg-code-input" data-i18n="register_code_label">Registration Code</label>
+          <input type="text" id="reg-code-input" placeholder="workshop-code" autocomplete="off" autocapitalize="off" />
+        </div>
+        <button class="btn-primary" id="register-btn" type="button" onclick="handleRegister()">
+          <span data-i18n="register_btn">Create Account</span>
+        </button>
+        <div class="login-error" id="register-error"></div>
+        <div class="login-switch-row">
+          <span data-i18n="register_have_account">Already registered?</span>
+          <button class="btn-link" type="button" onclick="showLoginPanel()" data-i18n="register_login_link">Sign in</button>
+        </div>
+      </div>
+
+      <!-- Admin first-login password setup -->
+      <div id="admin-setup-panel" style="display:none;">
+        <h2 data-i18n="admin_setup_title">Set admin password</h2>
+        <p data-i18n="admin_setup_subtitle">First sign-in for this admin account. Choose a password to secure it.</p>
+        <div class="form-group">
+          <label data-i18n="login_username">Username</label>
+          <input type="text" id="admin-setup-username" autocomplete="username" readonly />
+        </div>
+        <div class="form-group">
+          <label for="admin-setup-password" data-i18n="admin_setup_new_password">New password</label>
+          <input type="password" id="admin-setup-password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" maxlength="64" />
+        </div>
+        <div class="form-group">
+          <label for="admin-setup-confirm" data-i18n="admin_setup_confirm_password">Confirm password</label>
+          <input type="password" id="admin-setup-confirm" placeholder="Re-enter password" autocomplete="new-password" minlength="8" maxlength="64" onkeydown="if(event.key==='Enter')handleAdminSetup()" />
+        </div>
+        <button class="btn-primary" id="admin-setup-btn" type="button" onclick="handleAdminSetup()">
+          <span data-i18n="admin_setup_btn">Set password & sign in</span>
+        </button>
+        <div class="login-error" id="admin-setup-error"></div>
+      </div>
+
+      <div class="login-form-meta">
+        <span data-workshop-name>Workshop CTF</span>
+        <span>Capture the Flag</span>
+      </div>
+
+      <div class="login-lang-row">
+        <div class="lang-picker" id="login-lang-picker">
+          <button class="lang-picker-btn" type="button" onclick="toggleLangPicker(event)" aria-haspopup="true" aria-label="Select language">
+            <span id="login-lang-flag">🇬🇧</span>
+            <span id="login-lang-label">EN</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-picker-dropdown" id="lang-picker-dropdown">
+            <button onclick="setLang('en')" data-lang="en">🇬🇧 English</button>
+            <button onclick="setLang('es')" data-lang="es">🇪🇸 Español</button>
+            <button onclick="setLang('pt')" data-lang="pt">🇵🇹 Português</button>
+            <button onclick="setLang('fr')" data-lang="fr">🇫🇷 Français</button>
+            <button onclick="setLang('de')" data-lang="de">🇩🇪 Deutsch</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Mobile nav backdrop (off-canvas drawer) -->
+  <div class="mobile-nav-backdrop" onclick="closeMobileNav()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img id="participant-logo" src="/img/netskope-logo-dark.png" alt="Netskope" />
+        <span><b data-workshop-name style="font-weight:inherit;">Workshop CTF</b><br/><span>Capture the Flag</span></span>
+      </div>
+      <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="sidebar-action" onclick="showBoard()" title="Challenges" id="sidebar-challenges-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <span id="sidebar-challenges">Challenges</span>
+      </button>
+      <button class="sidebar-action" onclick="openLeaderboardPanel()" title="Leaderboard" id="sidebar-leaderboard-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 0 0 5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 1 0 5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        <span id="sidebar-leaderboard">Leaderboard</span>
+      </button>
+      <button class="sidebar-action" id="sidebar-lab-guide-btn" onclick="openPanel('instructions')" title="Guidelines">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span id="sidebar-lab-guide">Guidelines</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name"> Participant</div>
+          <div class="user-role" id="user-role">Workshop participant</div>
+        </div>
+      </div>
+      <button class="sidebar-action" onclick="handleLogout()" title="Sign out">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span id="sidebar-logout">Sign out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main: challenge board -->
+  <main class="main-area">
+    <!-- Sidebar expand button (shown when sidebar is collapsed) -->
+    <button class="sidebar-expand-btn" id="sidebar-expand-btn" onclick="toggleSidebar()" title="Expand sidebar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <header class="chat-header">
+      <div class="chat-header-left">
+        <button class="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Open menu" title="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="participant-session-block">
+          <div class="participant-session-kicker" id="participant-session-kicker">Workshop session</div>
+          <div class="participant-session-title" id="participant-session-title">Capture the Flag</div>
+        </div>
+      </div>
+      <div class="chat-header-right">
+        <div class="ctf-timer-chip is-idle" id="participant-timer-chip" title="CTF time remaining" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+          <span class="ctf-timer-val">--:--</span>
+        </div>
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" id="header-theme-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="header-theme-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="chat-workspace">
+      <div class="chat-column">
+        <div class="ctf-board" id="ctf-board">
+          <div class="ctf-board-inner">
+            <div class="ctf-board-head">
+              <div>
+                <div class="empty-kicker" data-workshop-name>Workshop CTF</div>
+                <h1 class="ctf-board-title" id="board-title">Capture the Flag</h1>
+                <p class="ctf-board-sub" id="board-subtitle">Investigate each scenario, find the answer and submit it as the flag.</p>
+              </div>
+              <span id="ctf-status-badge" class="ctf-board-status"></span>
+            </div>
+            <div id="challenges-progress-bar" class="ctf-board-progress"></div>
+            <div class="ctf-board-tabs" role="tablist">
+              <button id="chtab-list" onclick="showChallengeTab('list')">Challenges</button>
+              <button id="chtab-history" onclick="showChallengeTab('history')">My progress</button>
+              <button id="chtab-scoring" onclick="showChallengeTab('scoring')">Rules</button>
+            </div>
+            <div id="chtab-panel-list">
+              <div id="challenges-list" class="ctf-board-list"></div>
+            </div>
+            <div id="chtab-panel-history" style="display:none;">
+              <div id="participant-challenge-history" style="display:flex;flex-direction:column;gap:0;"></div>
+            </div>
+            <div id="chtab-panel-scoring" style="display:none;padding:4px 2px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <div class="lab-step">
+            <div class="step-number">🏅</div>
+            <div class="step-content">
+              <h3>Points per challenge</h3>
+              <p>Each challenge awards a fixed number of points shown on its card. Points are granted <strong>only on the first correct submission</strong>. If you already completed a challenge, resubmitting it has no effect.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">❌</div>
+            <div class="step-content">
+              <h3>Penalty for wrong answers</h3>
+              <p>Every failed attempt deducts <strong>5 points</strong> from your total score. Think before you submit — wrong answers hurt your ranking even if you eventually solve the challenge.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+              <h3>Hints</h3>
+              <p>Some challenges have an optional hint. Look for the <strong>Use hint</strong> button on the challenge card. Using a hint costs <strong>−5 points</strong> — the same as a wrong answer. You can only use each hint once, and the cost is applied immediately when you confirm.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🔁</div>
+            <div class="step-content">
+              <h3>Retry limit &amp; cooldown</h3>
+              <p>Each challenge has a maximum number of allowed attempts. If you reach the limit, the challenge is locked for <strong>5 minutes</strong>. After the cooldown the attempt counter resets and you can try again — but each new failure still costs 5 points.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🧮</div>
+            <div class="step-content">
+              <h3>Score formula</h3>
+              <p><strong>Total score = Σ points from completed challenges − (failed attempts × 5) − (hints used × 5)</strong><br>Every wrong answer and every hint used reduces your score by 5 points.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🏆</div>
+            <div class="step-content">
+              <h3>Tiebreaker</h3>
+              <p>If two participants have the same score, the one who reached it <strong>first</strong> ranks higher. Speed matters — don't wait until the last minute.</p>
+            </div>
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side-panel" id="leaderboard-panel">
+        <div class="panel-header">
+          <h2>Leaderboard</h2>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="loadChallengesLeaderboard()" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;cursor:pointer;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)';this.style.borderColor='var(--border)'">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              Refresh
+            </button>
+            <button class="icon-btn" onclick="closeLeaderboardPanel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="challenges-leaderboard" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </aside>
+
+      <!-- Instructions Panel -->
+      <aside class="side-panel" id="instructions-panel">
+        <div class="panel-header">
+          <h2 id="panel-lab-title">Guidelines</h2>
+          <button class="icon-btn" onclick="closePanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="lab-instructions-content"></div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN SCREEN
+══════════════════════════════════════ -->
+<div id="admin-screen">
+  <!-- Mobile nav (off-canvas drawer) -->
+  <button class="adm-mobile-nav-toggle" onclick="toggleAdminNav()" aria-label="Open menu" title="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="adm-nav-backdrop" onclick="closeAdminNav()"></div>
+
+  <!-- ── Sidebar ── -->
+  <aside class="adm-sidebar">
+    <div class="adm-sidebar-logo" style="flex-direction:column;align-items:flex-start;gap:8px;">
+      <img id="adm-logo" src="/img/netskope-logo-dark.png" alt="Netskope" style="height:28px;width:auto;" />
+      <span style="line-height:1.4;white-space:normal;"><b data-workshop-name style="font-weight:inherit;">Workshop CTF</b><br/><span style="font-size:11px;font-weight:500;color:var(--text-muted);">CTF Admin Center</span></span>
+    </div>
+
+    <nav class="adm-nav">
+      <div class="adm-nav-label" data-i18n="nav_group_overview">Overview</div>
+      <button class="adm-nav-item" onclick="adminTab('dashboard')" id="tab-dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span data-i18n="nav_dashboard">Dashboard</span>
+      </button>
+
+      <div class="adm-nav-label" data-i18n="nav_group_workshop">Capture the Flag</div>
+      <button class="adm-nav-item" onclick="adminTab('control')" id="tab-control">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="nav_control_center">Control Center</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('codes')" id="tab-codes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="nav_participants">Participants</span>
+      </button>
+
+      <button class="adm-nav-item" onclick="adminTab('challenges')" id="tab-challenges">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <span data-i18n="nav_challenges">Challenges</span>
+      </button>
+      <div class="adm-nav-label" data-i18n="nav_group_administration">Administration</div>
+      <button class="adm-nav-item" onclick="adminTab('settings')" id="tab-settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="nav_global_settings">Global Settings</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('admins')" id="tab-admins">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span data-i18n="nav_admins">Admins</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('about')" id="tab-about">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+        <span data-i18n="nav_about">About</span>
+      </button>
+    </nav>
+
+    <div class="adm-sidebar-footer">
+      <button class="adm-footer-btn" onclick="toggleTheme()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span data-i18n="nav_theme">Theme</span>
+      </button>
+      <button class="adm-footer-btn adm-signout" onclick="handleLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span data-i18n="nav_sign_out">Sign out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main area ── -->
+  <main class="adm-main">
+
+    <!-- ── Dashboard ── -->
+    <div class="admin-section" id="section-dashboard">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Workshop command view</span>
+            <h2 data-i18n="dash_title">Dashboard</h2>
+            <p>Monitor readiness, live CTF status, leaderboard and participant progress from one overview.</p>
+          </div>
+          <div class="standard-hero-actions dashboard-hero-actions">
+            <button class="standard-help-tile" onclick="openHelpSidebar('dashboard')" title="Open Help" aria-label="Open Dashboard help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top row: readiness + podium side by side -->
+      <div class="dash-top-row">
+        <div class="adm-card readiness-card">
+          <div class="adm-card-header readiness-card-header">
+            <span class="adm-card-title" data-i18n="dash_readiness_title">Workshop readiness</span>
+            <div class="ctf-timer-chip is-idle" id="status-timer-chip" title="CTF time remaining" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+              <span class="ctf-timer-val">--:--</span>
+            </div>
+          </div>
+          <div class="status-split">
+            <div class="status-controls">
+              <button class="status-tile" onclick="adminTab('control')">
+                <span class="status-tile-bg"></span>
+                <span class="status-tile-inner">
+                  <span class="ctf-dash-semaphore" id="dash-semaphore">
+                    <span class="ctf-dash-light ctf-dash-stop"    id="dash-light-stop"    title="Stopped" onclick="event.stopPropagation();setCTFState('stop')"></span>
+                    <span class="ctf-dash-light ctf-dash-standby" id="dash-light-standby" onclick="event.stopPropagation();setCTFState('standby')" title="Standby"></span>
+                    <span class="ctf-dash-light ctf-dash-run"     id="dash-light-run"     onclick="event.stopPropagation();setCTFState('run')"     title="Run"></span>
+                  </span>
+                  <span class="status-tile-copy">
+                    <span class="status-tile-name">Capture the Flag</span>
+                    <strong class="status-tile-val" id="dash-ctf-state-text">—</strong>
+                  </span>
+                </span>
+              </button>
+              <button class="status-tile" onclick="adminTab('control')">
+                <span class="status-tile-bg"></span>
+                <span class="status-tile-inner">
+                  <span class="ctf-dash-semaphore" id="dash-reg-semaphore">
+                    <span class="ctf-dash-light reg-dash-closed" id="dash-reg-light-closed" onclick="event.stopPropagation();setRegOpen(false)" title="Close registration"></span>
+                    <span class="ctf-dash-light reg-dash-open"   id="dash-reg-light-open"   onclick="event.stopPropagation();setRegOpen(true)"  title="Open registration"></span>
+                  </span>
+                  <span class="status-tile-copy">
+                    <span class="status-tile-name">Registration</span>
+                    <strong class="status-tile-val" id="dash-reg-state-text">—</strong>
+                  </span>
+                </span>
+              </button>
+            </div>
+            <div class="status-readiness">
+              <button class="status-row" onclick="adminTab('codes')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_participants">participants</span>
+                <span class="status-row-val" id="ready-participants-status">—</span>
+              </button>
+              <button class="status-row" onclick="adminTab('challenges')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_challenges">Capture the Flag</span>
+                <span class="status-row-val" id="ready-challenges-status">—</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card dashboard-leaderboard-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Leaderboard</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button id="award-ceremony-btn" class="btn-primary btn-icon" onclick="showAwardAnimation()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9L12 4l6 5M3 13h18M5 17h14M7 21h10"/></svg>
+                <span>The CTF Awards Ceremony</span>
+              </button>
+              <button class="btn-secondary btn-icon" onclick="openPodiumFullscreen()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                <span>Expand</span>
+              </button>
+            </div>
+          </div>
+          <div id="dash-podium" class="dash-podium"></div>
+        </div>
+
+        <!-- Podium fullscreen overlay -->
+        <div id="podium-overlay" class="podium-overlay" style="display:none;">
+          <div class="podium-overlay-header">
+            <span class="podium-overlay-title">Leaderboard</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button id="podium-autorefresh-btn" class="btn-secondary btn-icon" onclick="togglePodiumAutorefresh()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Autorefresh every 30s</span>
+              </button>
+              <button class="btn-secondary btn-icon" onclick="closePodiumFullscreen()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                <span>Close</span>
+              </button>
+            </div>
+          </div>
+          <div class="podium-fs-body">
+            <div id="dash-podium-fs" class="dash-podium dash-podium--fs"></div>
+            <div class="podium-fs-ranking" id="dash-podium-fs-ranking"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: participant activity table -->
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header"><span class="adm-card-title" data-i18n="dash_participant_activity">Participant Activity</span></div>
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);"><span data-i18n="col_code">Participant</span></th>
+              <th style="text-align:center;vertical-align:middle;">Rank</th>
+              <th style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);">Capture the Flag</th>
+              <th data-sortable data-col-index="3" data-sort-numeric="true" onclick="sortTable('dash-participants-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;">Points <span class="sort-arrow">⇅</span></th>
+            </tr>
+          </thead>
+          <tbody id="dash-participants-tbody"></tbody>
+        </table>
+      </div>
+
+    </div><!-- /section-dashboard -->
+
+    <!-- ── Students / Access Codes ── -->
+    <div class="admin-section" id="section-codes">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Workshop roster</span>
+            <h2 data-i18n="participants_title">Participants</h2>
+            <p>Provision accounts and track CTF progress.</p>
+          </div>
+          <div class="standard-hero-actions participants-hero-actions">
+            <button class="standard-icon-tile" onclick="openBulkParticipantsModal()" data-i18n-title="participants_bulk_create" title="Bulk-create participants with random names" aria-label="Bulk-create participants with random names">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('participants')" title="Open Help" aria-label="Open Participants help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header"><span class="adm-card-title" data-i18n="participants_all_card">All participants</span></div>
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th rowspan="2" data-sortable onclick="sortTable('codes-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;border-right:2px solid var(--border);">Participant <span class="sort-arrow">⇅</span></th>
+              <th colspan="3" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Capture the Flag</th>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllParticipants(this)" title="Delete all participants" aria-label="Delete all participants">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Progress</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Detail</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);">
+                <span class="participant-table-header-action">
+                  <span>Reset</span>
+                  <button class="participant-table-all-btn" onclick="resetAllChallenges(this)" title="Reset full CTF progress for all participants" aria-label="Reset all CTF progress">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="codes-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ── Control Center (CTF live controls) ── -->
+    <div class="admin-section" id="section-control">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Live workshop operations</span>
+            <h2 data-i18n="nav_control_center">Control Center</h2>
+            <p>Run the CTF session, control participant-facing visibility and manage registration from one operational surface.</p>
+          </div>
+          <div class="standard-hero-actions control-hero-actions">
+            <button class="standard-help-tile" onclick="openHelpSidebar('control')" title="Open Help" aria-label="Open Control Center help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cc-control-layout">
+        <div class="cc-semaphore-row">
+        <div class="adm-card challenge-overview-card" id="ctf-state-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Capture the Flag</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Status</span>
+                <span class="ctf-dash-status-line"><strong id="ctf-state-text">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore" id="ctf-state-control">
+                <button class="ctf-dash-light ctf-dash-stop" id="ctf-panel-light-stop" onclick="setCTFState('stop')" title="Stop Capture the Flag" aria-label="Stop Capture the Flag"></button>
+                <button class="ctf-dash-light ctf-dash-standby" id="ctf-panel-light-standby" onclick="setCTFState('standby')" title="Standby Capture the Flag" aria-label="Standby Capture the Flag"></button>
+                <button class="ctf-dash-light ctf-dash-run" id="ctf-panel-light-run" onclick="setCTFState('run')" title="Run Capture the Flag" aria-label="Run Capture the Flag"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="leaderboard-visible-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Leaderboard</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Participants</span>
+                <span class="ctf-dash-status-line"><strong id="lb-visible-label">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore challenge-panel-semaphore--registration">
+                <button class="ctf-dash-light reg-dash-closed" id="lb-panel-light-hidden" onclick="setLeaderboardVisible(false)" title="Hide leaderboard from participants" aria-label="Hide leaderboard from participants"></button>
+                <button class="ctf-dash-light reg-dash-open" id="lb-panel-light-visible" onclick="setLeaderboardVisible(true)" title="Show leaderboard to participants" aria-label="Show leaderboard to participants"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="reg-open-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Registration</span>
+          </div>
+          <div class="adm-card-body">
+            <input type="checkbox" id="reg-open-toggle" onchange="setRegOpen(this.checked)" hidden />
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Status</span>
+                <span class="ctf-dash-status-line"><strong id="reg-open-toggle-label">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore challenge-panel-semaphore--registration">
+                <button class="ctf-dash-light reg-dash-closed" id="reg-panel-light-closed" onclick="setRegOpen(false)" title="Close registration" aria-label="Close registration"></button>
+                <button class="ctf-dash-light reg-dash-open" id="reg-panel-light-open" onclick="setRegOpen(true)" title="Open registration" aria-label="Open registration"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div><!-- /cc-semaphore-row -->
+
+        <div class="cc-ops-row">
+        <div class="ctf-timer-banner is-idle" id="ctf-timer-banner">
+          <div class="adm-card-header ctf-timer-card-header">
+            <span class="adm-card-title">CTF TIMER</span>
+          </div>
+          <div class="ctf-timer-content">
+            <div class="ctf-timer-main">
+              <div class="ctf-timer-head">
+                <span class="ctf-timer-icon-shell">
+                  <svg class="ctf-timer-banner-ic" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+                </span>
+                <div>
+                  <div class="ctf-timer-display" id="ctf-timer-display">--:--:--</div>
+                  <div class="ctf-timer-status" id="ctf-timer-status">No timer set — the clock runs only while Capture the Flag is on Run.</div>
+                </div>
+              </div>
+              <div class="ctf-timer-ring" id="ctf-timer-track" role="progressbar" aria-label="CTF timer remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span id="ctf-timer-progress"></span>
+                <strong id="ctf-timer-percent">--</strong>
+              </div>
+            </div>
+            <div class="ctf-timer-quickrow">
+              <div class="ctf-timer-preset-group">
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(900)">15m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(1800)">30m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(2700)">45m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(3600)">1h</button>
+              </div>
+              <div class="ctf-timer-adjust-group">
+                <button class="ctf-qbtn" onclick="ctfTimerAdjust(-300)" title="Subtract 5 minutes">-5m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerAdjust(300)" title="Add 5 minutes">+5m</button>
+                <button class="ctf-qbtn ctf-qbtn-reset" onclick="ctfTimerReset()" title="Reset to configured time">↺</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="reg-code-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Registration Code</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="reg-code-panel">
+              <div class="reg-code-display">
+                <span class="reg-code-text" id="reg-code-input-admin">—</span>
+                <input class="adm-inline-input reg-code-input reg-code-edit-field" id="reg-code-edit-field" placeholder="enter-code-here" style="display:none;" />
+                <div class="reg-code-action-bar">
+                  <button class="row-icon-btn" id="reg-code-copy-btn" onclick="copyRegCode()" title="Copy" aria-label="Copy registration code">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                  <button class="row-icon-btn row-icon-btn--accent" id="reg-code-edit-btn" onclick="toggleRegCodeEdit()" title="Edit" aria-label="Edit registration code">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="admin-action-status reg-code-status" id="reg-code-status"></div>
+            </div>
+          </div>
+        </div>
+
+        </div><!-- /cc-ops-row -->
+      </div><!-- /cc-control-layout -->
+
+      <div class="cc-section-label" data-i18n="control_quick_actions">Quick actions</div>
+      <div class="cc-actions">
+        <button class="cc-action cc-action--primary" onclick="showAwardAnimation()">
+          <span class="cc-action-ic">🏆</span>
+          <div><div class="cc-action-title" data-i18n="control_action_ceremony">Launch Award Ceremony</div><div class="cc-action-desc" data-i18n="control_action_ceremony_desc">Fullscreen ranking reveal with music — for the prize-giving moment.</div></div>
+        </button>
+        <button class="cc-action cc-action--lb" onclick="openPodiumFullscreen()">
+          <span class="cc-action-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></span>
+          <div><div class="cc-action-title" data-i18n="control_action_leaderboard">Open Leaderboard</div><div class="cc-action-desc" data-i18n="control_action_leaderboard_desc">Fullscreen live ranking to project during the workshop.</div></div>
+        </button>
+        <button class="cc-action cc-action--danger" onclick="resetAllChallenges(this)">
+          <span class="cc-action-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></span>
+          <div><div class="cc-action-title" data-i18n="control_action_reset">Reset CTF progress</div><div class="cc-action-desc" data-i18n="control_action_reset_desc">Clears every participant's completions, points and penalties. Cannot be undone.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Challenges ── -->
+    <div class="admin-section" id="section-challenges">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Capture the Flag content</span>
+            <h2 data-i18n="nav_challenges">Challenges</h2>
+            <p>Create and manage the CTF questions, their flags, points and hints.</p>
+          </div>
+          <div class="standard-hero-actions challenges-hero-actions">
+            <label class="standard-icon-tile challenge-import-btn" title="Import CSV" aria-label="Import CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <input type="file" accept=".csv" style="display:none" onchange="importChallengesCSV(event)">
+            </label>
+            <button class="standard-icon-tile" onclick="exportChallengesCSV()" title="Export CSV" aria-label="Export CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            </button>
+            <button class="standard-icon-tile" onclick="loadChallengeTemplate()" title="Load bundled template (replaces all challenges)" aria-label="Load bundled template">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('challenges')" title="Open Help" aria-label="Open Challenges help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">All challenges</span>
+          <div style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;">
+            <button class="participant-table-all-btn" onclick="expandAllChallenges()" title="Expand all" style="width:26px;height:26px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <button class="participant-table-all-btn" onclick="collapseAllChallenges()" title="Collapse all" style="width:26px;height:26px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button onclick="toggleNewChallengeRow()" id="btn-add-challenge" title="Add challenge" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);font-size:16px;font-weight:600;cursor:pointer;line-height:1;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+        <table class="adm-table challenge-admin-table" id="challenges-table">
+          <colgroup>
+            <col style="width:4%;" />
+            <col style="width:5%;" />
+            <col class="challenge-col-label" />
+            <col class="challenge-col-value" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;"></th>
+              <th rowspan="2" style="text-align:center;border-right:2px solid var(--border);">SEQ</th>
+              <th colspan="2" rowspan="2" style="border-right:2px solid var(--border);">Challenge</th>
+              <th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;">Edit</th>
+              <th style="text-align:center;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllChallenges()" title="Delete all challenges">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;">
+                <span class="participant-table-header-action">
+                  <span>Visible</span>
+                  <button class="participant-table-all-btn" onclick="toggleAllChallengesVisible()" title="Toggle visibility for all challenges" id="challenge-toggle-all-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="new-challenge-tbody"></tbody>
+          <tbody id="challenges-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+
+    <!-- ── Admins ── -->
+    <div class="admin-section" id="section-admins">
+      <div class="adm-card admin-product-card">
+        <div class="admin-product-hero">
+          <div class="admin-product-copy">
+            <span class="admin-product-kicker">Administration</span>
+            <h2>Admin access management</h2>
+            <p>Create and manage instructor accounts with full control panel access.</p>
+          </div>
+          <div class="standard-hero-actions admins-hero-actions">
+            <button class="admin-help-tile" onclick="openHelpSidebar('admins')" title="Open Help" aria-label="Open Admins help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card admin-create-panel">
+        <div class="admin-create-copy">
+          <strong>Add admin</strong>
+          <span>A random password and API token are generated automatically on creation.</span>
+        </div>
+        <div class="admin-create-workspace">
+          <div class="admin-create-fields">
+            <input type="text" id="new-admin-code" placeholder="Username (5-12 chars)" maxlength="12" />
+            <input type="text" id="new-admin-label" placeholder="Display name (optional)" />
+          </div>
+          <div class="admin-form-actions">
+            <button class="btn-primary btn-icon admin-primary-action" onclick="createAdmin()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card admin-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">All admins</span>
+        </div>
+        <table class="adm-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:22%;" />
+            <col style="width:28%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Username</th>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Display name</th>
+              <th rowspan="2" style="vertical-align:middle;text-align:center;border-right:2px solid var(--border);">Status</th>
+              <th colspan="4" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Token</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Password</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span>Disable</span>
+                  <button class="participant-table-all-btn" onclick="disableAllAdmins()" title="Disable all (except ADMIN-2026)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllAdmins()" title="Delete all (except ADMIN-2026)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="admins-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ── Settings ── -->
+    <div class="admin-section" id="section-settings">
+      <div class="adm-card settings-product-card">
+        <div class="settings-product-hero">
+          <div class="settings-product-copy">
+            <span class="settings-product-kicker">Workshop configuration</span>
+            <h2>Global operating settings</h2>
+            <p>Workshop name, demo data and maintenance controls for this lab environment.</p>
+          </div>
+          <div class="standard-hero-actions settings-hero-actions">
+            <button class="settings-help-tile" onclick="openHelpSidebar('settings')" title="Open Help" aria-label="Open Global Settings help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-console">
+        <div class="adm-card settings-console-card settings-console-card--utility">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Workshop name</span>
+          </div>
+          <div class="settings-card-body">
+            <p class="settings-utility-copy">Shown on the login screen, the participant portal and the admin panel.</p>
+            <div class="field-group">
+              <input type="text" id="workshop-name-input" maxlength="60" placeholder="Workshop CTF" onkeydown="if(event.key==='Enter')saveWorkshopName()" />
+            </div>
+            <div class="settings-compact-actions">
+              <span id="workshop-name-msg" class="settings-inline-status"></span>
+              <button class="btn-primary btn-icon" onclick="saveWorkshopName()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="adm-card settings-console-card settings-console-card--utility">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Demo Data</span>
+          </div>
+          <div class="settings-card-body">
+            <p class="settings-utility-copy">Add sample challenges and 10 demo participants with progress, to preview the dashboard and leaderboard.</p>
+            <div class="settings-compact-actions">
+              <span id="demo-data-msg" class="settings-inline-status" style="display:none;color:var(--success);"></span>
+              <button class="btn-secondary btn-icon" onclick="generateDemoData()" id="demo-data-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-danger-zone">
+        <div class="settings-danger-zone-header">
+          <div>
+            <span class="settings-danger-kicker">Danger zone</span>
+            <h2>Destructive maintenance</h2>
+            <p>Use these actions only when preparing the lab for a new run or cleaning a completed workshop.</p>
+          </div>
+        </div>
+        <div class="settings-danger-grid">
+          <div class="settings-danger-action">
+            <div>
+              <strong>Clear Database</strong>
+              <p>Deletes participants, challenges and all CTF progress. Admins and settings are kept.</p>
+            </div>
+            <div class="settings-clear-warning">
+              <strong>This will permanently delete:</strong>
+              <ul>
+                <li>All <strong>participant accounts</strong> (admin preserved)</li>
+                <li>All <strong>challenges</strong>, completions and point penalties</li>
+              </ul>
+              <div>Admins and settings are <strong>kept</strong>.</div>
+            </div>
+            <div class="settings-compact-actions">
+              <span id="clear-db-msg" class="settings-inline-status" style="display:none;"></span>
+              <button class="btn-danger btn-icon" onclick="clearDatabase()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Clear
+              </button>
+            </div>
+          </div>
+          <div class="settings-danger-action settings-danger-action--reset">
+            <div>
+              <strong>Factory Reset</strong>
+              <p>Runs the full workshop reset flow and prepares the environment for the next group.</p>
+            </div>
+            <button class="btn-danger btn-icon" onclick="factoryReset()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              <span data-i18n="settings_factory_reset">Factory Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- ── About ── -->
+    <div class="admin-section" id="section-about">
+      <div class="adm-card about-product-card">
+        <div class="about-product-hero">
+          <div class="about-product-copy">
+            <span class="about-product-kicker" data-workshop-name>Workshop CTF</span>
+            <h2>About</h2>
+            <p>Made with love, coffee, and a suspicious number of “just one last tweak” moments. Built by humans who care about the details, even the tiny ones nobody notices… until they do.</p>
+          </div>
+          <button class="about-help-tile about-version-card" onclick="openChangelog()" title="Open changelog" aria-label="Open changelog">
+            <span class="about-version-label">Current version</span>
+            <span id="about-version-local" class="about-version-value">—</span>
+          </button>
+          <button class="about-help-tile" onclick="openHelpSidebar('about')" title="Open Help" aria-label="Open About help">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="adm-card about-details-card">
+        <div class="about-info-grid">
+          <div class="about-info-card">
+            <span class="about-info-label">Platform</span>
+            <strong data-workshop-name>Workshop CTF</strong>
+          </div>
+          <div class="about-info-card">
+            <span class="about-info-label">Built by</span>
+            <strong>Netskope Iberia team</strong>
+          </div>
+          <div class="about-info-card">
+            <span class="about-info-label" data-i18n="about_purpose_label">Purpose</span>
+            <strong data-i18n="about_purpose_value">Workshop &amp; Training</strong>
+          </div>
+        </div>
+
+        <div class="about-capabilities">
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span>Participant provisioning</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+            </span>
+            <span>Text-flag challenges</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+            </span>
+            <span>Timer &amp; leaderboard</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            </span>
+            <span>Workshop monitoring</span>
+          </div>
+        </div>
+
+        <div class="about-actions-panel">
+          <div class="about-actions-copy">
+            <strong>Maintenance</strong>
+            <span>Inspect the release notes.</span>
+          </div>
+          <div class="about-actions">
+            <button class="btn-secondary btn-icon" onclick="openChangelog()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Changelog
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-note">
+        <span class="about-note-ic">☕</span>
+        <div class="about-note-copy">
+          <div class="about-note-title" data-i18n="about_note_title">Fuel for the team</div>
+          <p class="about-note-desc" data-i18n="about_note_body">If this lab helped your workshop run smoother, the Netskope Iberia team accepts thanks in coffee, cold beers, Bitcoin, or a good conversation at the next meetup.</p>
+          <div class="about-note-meta" data-i18n="about_note_meta">Reference rate: 1 good conversation = 1 coffee. Premium challenge stories may qualify for beer tier. ₿</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Help Sidebar ── -->
+    <div class="help-sidebar-overlay" id="help-sidebar-overlay" onclick="closeHelpSidebar()"></div>
+    <div class="help-sidebar" id="help-sidebar">
+      <div class="help-sidebar-header">
+        <span class="help-sidebar-title" id="help-sidebar-title">Help</span>
+        <button class="help-sidebar-close" onclick="closeHelpSidebar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="help-sidebar-body">
+
+        <!-- Content panels -->
+        <div class="help-content">
+
+<div class="help-panel active" id="help-overview">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <h2>Overview</h2>
+            </div>
+            <p class="help-intro">This portal runs the Capture the Flag of your workshop: participants read each challenge, investigate, and submit the answer as a flag.</p>
+            <div class="help-steps">
+              <div class="help-step"><span class="help-step-num">1</span><div><strong>Challenges</strong> — create them, import a CSV or load the bundled template.</div></div>
+              <div class="help-step"><span class="help-step-num">2</span><div><strong>Participants</strong> — open registration in the Control Center or bulk-create accounts.</div></div>
+              <div class="help-step"><span class="help-step-num">3</span><div><strong>Run</strong> — set the timer and switch the CTF to Run. Follow the Dashboard and launch the award ceremony at the end.</div></div>
+            </div>
+          </div>
+
+
+          <div class="help-panel" id="help-dashboard">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <h2>Dashboard</h2>
+            </div>
+            <p class="help-intro">Readiness, live CTF status, leaderboard and participant progress at a glance.</p>
+            <div class="help-subsection">
+              <h3>Workshop readiness</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Capture the Flag (semaphore)</strong> — current CTF state: Stopped, Standby or Run. Click a light to change it.</li>
+                <li><strong>Registration (semaphore)</strong> — open or close participant self-registration.</li>
+                <li><strong>Participants</strong> — green when at least one participant exists.</li>
+                <li><strong>Capture the Flag</strong> — green when at least one challenge is visible.</li>
+              </ul>
+            </div>
+            <div class="help-subsection">
+              <h3>Leaderboard</h3>
+              <p>Live podium of the top participants. <em>Expand</em> opens the fullscreen ranking to project; the award ceremony reveals the final ranking with music.</p>
+            </div>
+            <div class="help-subsection">
+              <h3>Participant activity</h3>
+              <p>Every participant with their rank, challenges completed and total points.</p>
+            </div>
+          </div>
+
+          <div class="help-panel" id="help-participants">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h2>Participants</h2>
+            </div>
+            <p class="help-intro">All workshop participants and their CTF progress.</p>
+            <div class="help-subsection">
+              <h3>How participants join</h3>
+              <p>In <strong>Control Center</strong> open registration and share the <strong>Registration Code</strong>; participants click <em>Register here</em> on the login screen. Alternatively, use the bulk-create button (top right) to generate accounts with random names — username and password are the same.</p>
+            </div>
+            <div class="help-subsection">
+              <h3>Table columns</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Progress</strong> — challenges completed out of the visible total.</li>
+                <li><strong>Detail</strong> — timeline of completions, wrong answers and hints.</li>
+                <li><strong>Reset</strong> — clears the participant's completions, penalties and hints.</li>
+                <li><strong>Delete</strong> — removes the participant and all their CTF data. Cannot be undone.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="help-panel" id="help-control">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h2>Control Center</h2>
+            </div>
+            <p class="help-intro">The cockpit for running the live session. From here you govern the game state, registration, what participants can see, and the climax actions — without touching configuration.</p>
+
+            <div class="help-subsection">
+              <h3>Control cards</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Capture the Flag</strong> — semaphore for the global CTF state: <em>Stop</em> (challenges hidden from participants), <em>Standby</em> (visible but submissions paused), <em>Run</em> (active). The card background turns red / amber / green to match. Also mirrored on the Dashboard.</li>
+                <li><strong>Registration</strong> — open or close participant self-registration. When closed, the registration code stops working.</li>
+                <li><strong>Leaderboard</strong> — show or hide the leaderboard <em>for participants</em>. When hidden, their leaderboard button disappears; you (admin) always keep full access on the Dashboard and in the ceremony.</li>
+                <li><strong>Registration Code</strong> — the shared code participants enter to register. Copy it or edit it inline.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Quick actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>🏆 Launch Award Ceremony</strong> — a fullscreen, music-synced ranking reveal for the prize-giving moment. The runners-up appear one by one, then the podium is revealed 3rd → 2nd → 1st with confetti. Use the on-screen Start / Stop / Replay controls.</li>
+                <li><strong>Open Leaderboard</strong> — the live ranking in fullscreen, ideal to project during the workshop. Includes an autorefresh toggle.</li>
+                <li><strong>Reset CTF progress</strong> — clears every participant's completions, points and penalties. Asks for confirmation and <strong>cannot be undone</strong>.</li>
+              </ul>
+            </div>
+
+            <div class="help-note">The leaderboard ranks <strong>all</strong> participants — those with no completions appear at the bottom with their penalty-adjusted score.</div>
+          </div>
+
+          <div class="help-panel" id="help-challenges">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <h2>Challenges</h2>
+            </div>
+            <p class="help-intro">Every challenge is a text question. The participant types an answer and presses <em>Check</em>; it is compared with the challenge's <strong>flag</strong>. The flag is never sent to the participant's browser.</p>
+
+            <div class="help-subsection">
+              <h3>Creating a challenge</h3>
+              <div class="help-steps">
+                <div class="help-step"><span class="help-step-num">1</span><div><strong>Title</strong> and <strong>description</strong> — the scenario shown to participants.</div></div>
+                <div class="help-step"><span class="help-step-num">2</span><div><strong>Flag</strong> — the expected answer. Matching ignores upper/lower case and extra spaces, but is otherwise exact. Use <code>%username</code> to expect a different answer per participant.</div></div>
+                <div class="help-step"><span class="help-step-num">3</span><div><strong>Points</strong> — awarded on the first correct answer (default 50).</div></div>
+                <div class="help-step"><span class="help-step-num">4</span><div><strong>Hint</strong> — optional; revealing it costs <strong>−5 points</strong>.</div></div>
+              </div>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Scoring and penalties</h3>
+              <p>Total score = points earned − 5 × (wrong answers + hints used). After 5 wrong answers on a challenge it locks for 5 minutes.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Import / Export / Template</h3>
+              <p>CSV columns: <code>seq,title,description,flag,points,hint,visible</code>. <em>Import</em> appends; <em>Load template</em> replaces all challenges (and progress) with <code>templates/challenges.csv</code>.</p>
+            </div>
+
+            <div class="help-note"><strong>Delete all</strong> removes every challenge and all participant progress.</div>
+          </div>
+
+
+
+
+
+
+          <div class="help-panel" id="help-admins">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <h2>Admins</h2>
+            </div>
+            <p class="help-intro">Manage admin accounts for the workshop. Admins have full access to this panel and are not visible to participants.</p>
+
+            <div class="help-subsection">
+              <h3>Creating an admin</h3>
+              <div class="help-steps" style="margin-top:8px;">
+                <div class="help-step"><span class="help-step-num">1</span><div><strong>Username</strong> — 5–12 characters, auto-uppercased (e.g. <code>ALICE</code>). This is the login code.</div></div>
+                <div class="help-step"><span class="help-step-num">2</span><div><strong>Display name</strong> — optional label shown in the table (e.g. <em>Alice Smith</em>).</div></div>
+                <div class="help-step"><span class="help-step-num">3</span><div>Click <em>Create</em>. A popup shows the username, a randomly-generated password, and the API token. <strong>Save them immediately</strong> — the password is not stored in plain text and cannot be recovered.</div></div>
+              </div>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Row actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>View token</strong> — shows the admin's API token for copying.</li>
+                <li><strong>Reset password</strong> — generates a new random password and displays it once.</li>
+                <li><strong>Enable / Disable</strong> — disabled accounts cannot log in. The row is dimmed. Not available for <code>ADMIN-2026</code>.</li>
+                <li><strong>Delete</strong> — permanently removes the account. Not available for <code>ADMIN-2026</code>.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Bulk actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Disable all</strong> — disables every admin except <code>ADMIN-2026</code>. Useful at the end of a session.</li>
+                <li><strong>Delete all</strong> — permanently deletes every admin except <code>ADMIN-2026</code>.</li>
+              </ul>
+            </div>
+
+            <div class="help-note"><code>ADMIN-2026</code> is the built-in default account and cannot be deleted or disabled. To replace it, create a new admin and use <em>Disable all</em> to lock out the default.</div>
+          </div>
+
+          <div class="help-panel" id="help-settings">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h2>Global Settings</h2>
+            </div>
+            <p class="help-intro">Demo data and maintenance actions.</p>
+            <div class="help-subsection">
+              <h3>Demo data</h3>
+              <p>Adds 5 sample challenges (if missing) and 10 demo participants (DEMO-01 … DEMO-10, password = username) with varied progress, to preview the dashboard, podium and ceremony. Existing challenges are kept.</p>
+            </div>
+            <div class="help-subsection">
+              <h3>Clear database</h3>
+              <p><strong>Deleted:</strong> participants, challenges and all CTF progress. <strong>Kept:</strong> admin accounts and settings.</p>
+            </div>
+            <div class="help-subsection">
+              <h3>Factory reset</h3>
+              <p>Everything in <em>Clear database</em>, plus settings back to defaults, every admin except <code>ADMIN-2026</code> removed, and the <code>ADMIN-2026</code> password cleared (you set a new one on the next sign-in).</p>
+            </div>
+            <div class="help-note">Both actions are irreversible. Back up <code>data/data.db</code> first if you need the results.</div>
+          </div>
+
+        </div><!-- /help-content -->
+      </div><!-- /help-sidebar-body -->
+    </div><!-- /help-sidebar -->
+
+  </main>
+</div>
+
+
+
+
+<script src="/js/i18n.js?v=1.0.0"></script>
+<script src="/js/app.js?v=1.0.0"></script>
+
+
+<!-- Alert Modal -->
+<div id="alert-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="alert-modal-icon" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+      <div>
+        <div id="alert-modal-title" style="font-size:15px;font-weight:700;color:var(--text-primary);"></div>
+      </div>
+    </div>
+    <p id="alert-modal-body" style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6;"></p>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeAlertModal()" style="padding:9px 20px;">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog Modal -->
+<div id="changelog-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Changelog</div>
+      <button onclick="document.getElementById('changelog-modal').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:4px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="changelog-body" style="overflow-y:auto;font-size:13px;color:var(--text-secondary);line-height:1.7;flex:1;"></div>
+  </div>
+</div>
+
+<!-- Generic Confirm Modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </div>
+      <div>
+        <div id="confirm-modal-title" style="font-size:15px;font-weight:700;color:var(--text-primary);"></div>
+        <div id="confirm-modal-subtitle" style="font-size:12px;color:var(--text-muted);margin-top:1px;"></div>
+      </div>
+    </div>
+    <p id="confirm-modal-body" style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6;"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeConfirmModal()" style="padding:9px 20px;" data-i18n="modal_cancel">Cancel</button>
+      <button id="confirm-modal-ok" class="btn-danger" style="padding:9px 20px;" data-i18n="modal_delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Factory Reset Progress Modal -->
+<div id="factory-reset-progress-modal" class="factory-reset-progress-modal" style="display:none;">
+  <div class="factory-reset-progress-card">
+    <div class="factory-reset-progress-header">
+      <div id="factory-reset-progress-icon" class="factory-reset-progress-icon is-running">
+        <span class="factory-reset-spinner"></span>
+      </div>
+      <div>
+        <div id="factory-reset-progress-title" class="factory-reset-progress-title">Factory reset in progress</div>
+        <div id="factory-reset-progress-subtitle" class="factory-reset-progress-subtitle">Deleting workshop data and validating Netskope tokens...</div>
+      </div>
+    </div>
+    <div id="factory-reset-progress-steps" class="factory-reset-progress-steps">
+      <div class="factory-reset-step is-running">
+        <span class="factory-reset-step-dot"></span>
+        <div>
+          <div class="factory-reset-step-title">Starting factory reset</div>
+          <div class="factory-reset-step-detail">Please keep this window open.</div>
+        </div>
+      </div>
+    </div>
+    <div id="factory-reset-progress-errors" class="factory-reset-progress-errors" style="display:none;"></div>
+    <div class="factory-reset-progress-actions">
+      <button id="factory-reset-progress-ok" class="btn-primary" onclick="closeFactoryResetProgressModal()" disabled>OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Factory Reset Modal -->
+<div id="factory-reset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);" data-i18n="modal_factory_reset_title">Factory Reset</div>
+        <div style="font-size:12px;color:var(--text-muted);" data-i18n="modal_factory_reset_subtitle">This action cannot be undone</div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="modal_factory_reset_desc">The following will be permanently deleted:</p>
+    <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px;margin-bottom:20px;display:flex;flex-direction:column;gap:5px;">
+      <li>All participant accounts and their CTF progress</li>
+      <li>All challenges</li>
+      <li>Settings (CTF state, timer, retries, registration code)</li>
+      <li>Every admin except ADMIN-2026, whose password is cleared</li>
+    </ul>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">You will set a new ADMIN-2026 password on the next sign-in.</p>
+
+    <label style="display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;" data-i18n="modal_factory_reset_type_label">Type <code style="color:var(--danger);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:4px;">RESET</code> to confirm</label>
+    <input id="factory-reset-input" type="text" placeholder="RESET" autocomplete="off"
+      style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text-primary);font-size:14px;font-weight:600;letter-spacing:2px;margin-bottom:20px;"
+      oninput="const _b=document.getElementById('factory-reset-confirm-btn');const _ok=this.value.trim().toUpperCase()==='RESET';_b.disabled=!_ok;_b.style.opacity=_ok?'1':'.4'"
+      onkeydown="if(event.key==='Enter')confirmFactoryReset();if(event.key==='Escape')closeFactoryResetModal();" />
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeFactoryResetModal()" style="padding:9px 20px;" data-i18n="modal_cancel">Cancel</button>
+      <button id="factory-reset-confirm-btn" class="btn-danger" onclick="confirmFactoryReset()" disabled style="padding:9px 20px;opacity:.4;transition:opacity .15s;" data-i18n="modal_factory_reset_confirm_btn">Reset everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- Participant CTF sidebar -->
+<div id="ctf-sidebar-overlay" class="ctf-sidebar-overlay" onclick="closeCtfSidebar()"></div>
+<div id="ctf-sidebar" class="ctf-sidebar">
+  <div class="ctf-sidebar-header">
+    <div>
+      <div class="ctf-sidebar-name" id="ctf-sidebar-name">—</div>
+      <div class="ctf-sidebar-sub" id="ctf-sidebar-sub">Challenge progress</div>
+    </div>
+    <button class="ctf-sidebar-close" onclick="closeCtfSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ctf-sidebar-score" id="ctf-sidebar-score"></div>
+  <div class="ctf-sidebar-section-title">Activity timeline</div>
+  <div class="ctf-sidebar-timeline" id="ctf-sidebar-timeline"></div>
+</div>
+</body>
+</html>

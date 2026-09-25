@@ -1,0 +1,159 @@
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const db = require('../db');
+const { JWT_SECRET, SESSION_VERSION, isDisabled } = require('../middleware/auth');
+const { PARTICIPANT_ICONS } = require('../constants');
+
+const { limitFailures } = require('../rate-limit');
+
+const router = express.Router();
+
+// Signs a 12h session for an access_codes row and shapes the login response.
+function sessionResponse(row) {
+  const payload = {
+    session_version: SESSION_VERSION,
+    code: row.code,
+    role: row.role,
+    username: row.username || null,
+    icon: row.icon || null,
+  };
+  return {
+    token: jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' }),
+    role: row.role,
+    username: payload.username,
+    icon: payload.icon,
+  };
+}
+
+// Throttle only failed attempts, keyed on the account being targeted — see
+// server/rate-limit.js for why a plain per-IP limit would break a workshop
+// where every participant shares one public IP.
+const loginLimiter = limitFailures({
+  scope: 'login',
+  windowMs: 15 * 60 * 1000,
+  max: 10,        // failures against one username from one IP
+  ipMax: 100,     // failures from one IP across all usernames (spraying)
+  key: req => `${req.ip}:${String(req.body?.username || '').trim().toLowerCase()}`,
+});
+
+// Registration is gated by a shared code, so the thing worth throttling is
+// guessing that code. Successful registrations are never counted.
+const registerLimiter = limitFailures({
+  scope: 'register',
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  key: req => `${req.ip}`,
+});
+
+const adminSetupLimiter = limitFailures({
+  scope: 'admin-setup',
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: req => `${req.ip}`,
+});
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+// All users: { username, password }
+router.post('/login', loginLimiter, async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username) return res.status(400).json({ error: 'Username and password required' });
+
+  const row = db.prepare("SELECT * FROM access_codes WHERE username = ?").get(username.trim());
+  if (!row || isDisabled(row)) return res.status(401).json({ error: 'Invalid username or password' });
+
+  // Default admin with no password yet → first-login password setup.
+  // Checked before requiring a password, so signing in with an empty password
+  // (or any value) triggers the setup prompt instead of failing silently.
+  if (!row.password_hash) {
+    if (row.role === 'admin') {
+      return res.json({ setup_required: true, username: row.username });
+    }
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  if (!password) return res.status(400).json({ error: 'Username and password required' });
+
+  const valid = await bcrypt.compare(password, row.password_hash);
+  if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
+
+  res.json(sessionResponse(row));
+});
+
+// ── Register ──────────────────────────────────────────────────────────────────
+router.post('/register', registerLimiter, async (req, res) => {
+  const { username, password, registration_code } = req.body;
+
+  if (!username || !password || !registration_code) {
+    return res.status(400).json({ error: 'username, password and registration_code are required' });
+  }
+
+  const usernameClean = username.trim();
+  if (usernameClean.length < 5 || usernameClean.length > 8) {
+    return res.status(400).json({ error: 'Username must be between 5 and 8 characters' });
+  }
+  if (!/^[a-zA-Z0-9_\-]+$/.test(usernameClean)) {
+    return res.status(400).json({ error: 'Username can only contain letters, numbers, _ and -' });
+  }
+  if (password.length < 5 || password.length > 8) {
+    return res.status(400).json({ error: 'Password must be between 5 and 8 characters' });
+  }
+
+  // Check registration is open
+  const regOpenRow = db.prepare("SELECT value FROM settings WHERE key = 'registration_open'").get();
+  if (!regOpenRow || regOpenRow.value !== 'true') {
+    return res.status(403).json({ error: 'Registration is currently closed' });
+  }
+
+  // Validate registration code
+  const regCodeRow = db.prepare("SELECT value FROM settings WHERE key = 'registration_code'").get();
+  if (!regCodeRow || !regCodeRow.value) {
+    return res.status(403).json({ error: 'Registration is currently closed' });
+  }
+  if (registration_code.trim() !== regCodeRow.value) {
+    return res.status(401).json({ error: 'Invalid registration code' });
+  }
+
+  // Check username not taken
+  const existing = db.prepare("SELECT id FROM access_codes WHERE username = ?").get(usernameClean);
+  if (existing) return res.status(409).json({ error: 'Username already taken' });
+
+  const internalCode = usernameClean.toUpperCase();
+  const codeExists = db.prepare("SELECT id FROM access_codes WHERE code = ?").get(internalCode);
+  if (codeExists) return res.status(409).json({ error: 'Username already taken' });
+
+  const password_hash = await bcrypt.hash(password, 10);
+
+  // Pick a random icon. With 100+ icons for a typical workshop size, collisions
+  // are rare and cosmetic. Avoiding the SELECT here removes a DB round-trip and
+  // the race condition that could assign the same icon to concurrent registrations.
+  const icon = PARTICIPANT_ICONS[Math.floor(Math.random() * PARTICIPANT_ICONS.length)];
+
+  const row = db.prepare(
+    "INSERT INTO access_codes (code, label, role, username, password_hash, icon) VALUES (?, ?, 'participant', ?, ?, ?) RETURNING *"
+  ).get(internalCode, usernameClean, usernameClean, password_hash, icon);
+
+  res.json(sessionResponse(row));
+});
+
+// ── Admin first-login password setup ────────────────────────────────────────
+// Sets the password for an admin account that has none yet (fresh install).
+// Can only be used while the account has no password — once set, it 409s.
+router.post('/admin-setup', adminSetupLimiter, async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  if (password.length > 64) return res.status(400).json({ error: 'Password must be at most 64 characters' });
+
+  const row = db.prepare("SELECT * FROM access_codes WHERE username = ? AND role = 'admin'").get(username.trim());
+  if (!row) return res.status(401).json({ error: 'Admin account not found' });
+  if (row.password_hash) return res.status(409).json({ error: 'Admin password already set' });
+
+  const password_hash = await bcrypt.hash(password, 10);
+  db.prepare("UPDATE access_codes SET password_hash = ? WHERE id = ?").run(password_hash, row.id);
+
+  res.json(sessionResponse(row));
+});
+
+module.exports = router;

@@ -1,0 +1,15 @@
+name: general-workshop-ctf
+
+services:
+  general-workshop-ctf:
+    build: .
+    image: general-workshop-ctf
+    container_name: general-workshop-ctf
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - NODE_ENV=production
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

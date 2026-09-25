@@ -1,0 +1,6 @@
+seq,title,description,flag,points,hint,visible
+1,"Warm-up","Welcome to the CTF! Type your own username to validate your first flag.","%username",25,"It is shown in the bottom-left corner of the portal.",1
+2,"HTTPS","A user cannot reach an internal web app over TLS. Which TCP port does HTTPS use by default?","443",50,"HTTP uses port 80.",1
+3,"Proxy authentication","A browser receives an HTTP error asking it to authenticate against a proxy. What is that HTTP status code?","407",50,"It is in the 4xx range, right after 406.",1
+4,"DNS over IPv6","Which DNS record type maps a hostname to an IPv6 address?","AAAA",50,"The IPv4 equivalent is a single letter.",1
+5,"Access denied","The server understood the request but refuses to authorize it. Which HTTP status code is returned?","403",50,"Not 401: the client may already be authenticated.",1
