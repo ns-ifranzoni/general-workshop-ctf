@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.0
+- **Deployment:** `scripts/install-ctf-amazonlinux.sh` installs everything from scratch on Amazon Linux (EC2) and publishes the portal over HTTPS with Let's Encrypt via Caddy. The README documents it, including the requirement that the chosen domain already exists and points to the instance.
+
 ## v1.0.0
 First release.
 
