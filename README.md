@@ -16,6 +16,7 @@ file.
 - [Features](#features)
 - [Quick start](#quick-start)
 - [Updating](#updating)
+- [Deploy on AWS EC2 (Amazon Linux)](#deploy-on-aws-ec2-amazon-linux)
 - [Running a workshop](#running-a-workshop)
 - [Challenges](#challenges)
 - [Scoring rules](#scoring-rules)
@@ -75,6 +76,44 @@ docker compose up -d --build
 ```
 
 Your data lives in `./data` and is kept across rebuilds.
+
+---
+
+## Deploy on AWS EC2 (Amazon Linux)
+
+`scripts/install-ctf-amazonlinux.sh` installs everything from scratch on a
+fresh Amazon Linux 2023 or 2 instance (x86_64 or arm64) and publishes the
+portal over **HTTPS** with an automatic Let's Encrypt certificate:
+
+```
+Internet --443/80--> Caddy (container, Let's Encrypt) --> 127.0.0.1:3002 (app)
+```
+
+The script installs Docker, Compose and Buildx, clones this repo, starts the
+app bound to localhost only, and runs Caddy as the HTTPS reverse proxy.
+
+**Before running it**
+
+1. **The domain you choose must already exist** and its DNS **A record** must
+   point to the instance's public IP. Without it Let's Encrypt cannot validate
+   the domain, no certificate is issued and the installation fails to serve HTTPS.
+2. The instance's Security Group must allow inbound **TCP 80 and 443** from the
+   Internet (80 is needed for the Let's Encrypt validation and the HTTP to HTTPS redirect).
+
+**Run it** as `ec2-user` (do **not** use `sudo`; the script elevates where needed):
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/ns-ifranzoni/general-workshop-ctf/main/scripts/install-ctf-amazonlinux.sh
+chmod +x install-ctf-amazonlinux.sh
+./install-ctf-amazonlinux.sh <domain> <email>
+# e.g. ./install-ctf-amazonlinux.sh ctf.example.com admin@example.com
+```
+
+`<email>` is used by Let's Encrypt for the certificate. When it finishes, open
+`https://<domain>` and sign in as `ADMIN-2026` with an empty password (the portal
+asks you to set one). The script is idempotent: re-running it pulls the latest
+code and rebuilds. Logs: `sudo docker logs -f caddy` (proxy) and
+`cd ~/general-workshop-ctf && sudo docker compose logs -f` (app).
 
 ---
 
