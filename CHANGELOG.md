@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.0
+- **Feature:** the hint penalty is now configurable. **Global Settings → Hint penalty** sets the default (5, stored as `hint_penalty`), and each challenge can override it with its own *pts penalty* next to the hint text (blank = use the default). It is applied to the participant total, history, leaderboard, podium and dashboard ranking; the "Use hint" dialog shows the effective cost. Wrong answers still cost 5. The CSV export/import gains an optional `hint_penalty` column (older CSVs still import).
+- **Fix:** the authentication rate limits are sized for a classroom where almost every participant shares one public IP. Only failed attempts count, but a whole room can easily trip the old caps: the per-IP ceiling on login goes from 100 to 2000 failures per 15 min, registration from 15 to 1000 and admin setup from 10 to 50. The per-account login limit (10 failures per username) is unchanged.
+- **Fix:** CSV import now turns CRLF/CR line breaks inside quoted cells (Excel) into LF, so Markdown descriptions round-trip exactly. **Load template** aborts without touching the challenges if the template has no valid rows.
+- **Installer:** new unified `install.sh` (Amazon Linux 2023 and Ubuntu/Debian, auto-detected) replaces `scripts/install-ctf-amazonlinux.sh` and `scripts/install-ctf-ubuntu.sh`. It installs Docker, Compose and a recent Buildx, deploys to `/opt/general-workshop-ctf`, and publishes HTTPS through Caddy: self-signed by default (works with an IP or an EC2 hostname) or Let's Encrypt with `TLS_MODE=acme`. Re-running it updates the app and keeps `./data`.
+
 ## v1.1.0
 - **Deployment:** `scripts/install-ctf-amazonlinux.sh` installs everything from scratch on Amazon Linux (EC2) and publishes the portal over HTTPS with Let's Encrypt via Caddy. The README documents it, including the requirement that the chosen domain already exists and points to the instance.
 

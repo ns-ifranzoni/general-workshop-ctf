@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 const db = require('../db');
 const { DEFAULT_CTF_TIMER_SECONDS, DEFAULT_REGISTRATION_CODE, DEFAULT_ADMIN, DEFAULT_WORKSHOP_NAME } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
-const { setSetting, invalidate: invalidateSettings } = require('../settings-cache');
+const { getSetting, setSetting, invalidate: invalidateSettings } = require('../settings-cache');
 const PARTICIPANT_NAMES = require('../participant-names');
 const { PARTICIPANT_ICONS } = require('../constants');
 const { parseCsv, challengeFromCsvRow } = require('../challenge-csv');
@@ -201,6 +201,18 @@ router.post('/registration-open', requireAdmin, (req, res) => {
 // ── Workshop name ─────────────────────────────────────────
 const MAX_WORKSHOP_NAME = 60;
 
+router.get('/settings/hint-penalty', requireAdmin, (req, res) => {
+  const v = parseInt(getSetting('hint_penalty'), 10);
+  res.json({ hint_penalty: Number.isNaN(v) || v < 0 ? 5 : v });
+});
+
+router.put('/settings/hint-penalty', requireAdmin, (req, res) => {
+  const val = parseInt(req.body?.hint_penalty, 10);
+  if (Number.isNaN(val) || val < 0 || val > 1000) return res.status(400).json({ error: 'Hint penalty must be a number between 0 and 1000' });
+  setSetting('hint_penalty', String(val));
+  res.json({ hint_penalty: val });
+});
+
 router.put('/settings/workshop-name', requireAdmin, (req, res) => {
   const name = String(req.body?.name || '').trim().replace(/\s+/g, ' ');
   if (!name) return res.status(400).json({ error: 'Workshop name is required' });
@@ -230,7 +242,8 @@ router.post('/challenges/sync-template', requireAdmin, (req, res) => {
   } catch (e) {
     return res.status(404).json({ error: 'Template not found: templates/challenges.csv' });
   }
-  const insert = db.prepare('INSERT INTO challenges (order_num, title, description, flag, points, hint, visible) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  if (!rows.some(r => challengeFromCsvRow(r))) return res.status(502).json({ error: 'Template contains no challenges' });
+  const insert = db.prepare('INSERT INTO challenges (order_num, title, description, flag, points, hint, hint_penalty, visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
   let imported = 0;
   db.transaction(() => {
     db.prepare('DELETE FROM challenge_completions').run();
@@ -241,7 +254,7 @@ router.post('/challenges/sync-template', requireAdmin, (req, res) => {
       const c = challengeFromCsvRow(row);
       if (!c) continue;
       imported++;
-      insert.run(imported, c.title, c.description, c.flag, c.points, c.hint, c.visible);
+      insert.run(imported, c.title, c.description, c.flag, c.points, c.hint, c.hint_penalty, c.visible);
     }
   })();
   res.json({ ok: true, imported, source: 'templates/challenges.csv' });
@@ -281,6 +294,7 @@ router.post('/settings/factory-reset', requireAdmin, (req, res) => {
   try {
     const defaults = [
       ['max_retries', '5'],
+      ['hint_penalty', '5'],
       ['ctf_state', 'stop'],
       ['ctf_timer_total', String(DEFAULT_CTF_TIMER_SECONDS)],
       ['ctf_timer_remaining', String(DEFAULT_CTF_TIMER_SECONDS)],

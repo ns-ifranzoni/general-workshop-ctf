@@ -33,7 +33,7 @@ const loginLimiter = limitFailures({
   scope: 'login',
   windowMs: 15 * 60 * 1000,
   max: 10,        // failures against one username from one IP
-  ipMax: 100,     // failures from one IP across all usernames (spraying)
+  ipMax: 2000,    // failures from one IP across all usernames (spraying); a whole room shares one public IP
   key: req => `${req.ip}:${String(req.body?.username || '').trim().toLowerCase()}`,
 });
 
@@ -42,14 +42,14 @@ const loginLimiter = limitFailures({
 const registerLimiter = limitFailures({
   scope: 'register',
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 1000,      // a room sharing one IP can produce many validation errors
   key: req => `${req.ip}`,
 });
 
 const adminSetupLimiter = limitFailures({
   scope: 'admin-setup',
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50,
   key: req => `${req.ip}`,
 });
 

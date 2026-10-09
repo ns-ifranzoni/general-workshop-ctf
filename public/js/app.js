@@ -119,6 +119,33 @@ async function saveWorkshopName() {
   setTimeout(() => { msg.textContent = ''; }, 3000);
 }
 
+/* ── Hint penalty (global default, Control Center) ── */
+let _hintPenaltyDefault = 5;
+
+async function loadHintPenalty() {
+  try {
+    const res = await apiFetch('/api/admin/settings/hint-penalty');
+    const d = await res.json();
+    if (res.ok) _hintPenaltyDefault = d.hint_penalty ?? 5;
+    const input = document.getElementById('hint-penalty-input');
+    if (input && document.activeElement !== input) input.value = _hintPenaltyDefault;
+  } catch {}
+}
+
+async function saveHintPenalty() {
+  const input = document.getElementById('hint-penalty-input');
+  const msg = document.getElementById('hint-penalty-msg');
+  const val = parseInt(input.value, 10);
+  if (Number.isNaN(val) || val < 0 || val > 1000) { msg.textContent = 'Enter 0–1000'; msg.style.color = 'var(--danger)'; return; }
+  const res = await apiFetch('/api/admin/settings/hint-penalty', { method: 'PUT', body: JSON.stringify({ hint_penalty: val }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { msg.textContent = data.error || `HTTP ${res.status}`; msg.style.color = 'var(--danger)'; return; }
+  _hintPenaltyDefault = data.hint_penalty;
+  msg.textContent = '✓ Saved';
+  msg.style.color = 'var(--success)';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
 /* ── Auth ── */
 
 function showLoginPanel() {
@@ -443,7 +470,7 @@ function adminTab(tab) {
   if (tab === 'challenges') loadChallenges();
   if (tab === 'control') { loadCTFState(); loadRegOpen(); loadRegCode(); loadLeaderboardVisible(); }
   if (tab === 'about') loadAboutVersion();
-  if (tab === 'settings') loadWorkshopName();
+  if (tab === 'settings') { loadWorkshopName(); loadHintPenalty(); }
 }
 
 const HELP_TITLES = {
@@ -2091,6 +2118,7 @@ async function setLeaderboardVisible(visible) {
 }
 
 async function loadChallenges() {
+  await loadHintPenalty();
   const res = await apiFetch('/api/challenges');
   const challenges = await res.json();
   _challengesCache = challenges;
@@ -2129,7 +2157,7 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
     : `<span class="challenge-read-value">${c.points ?? 50} pts</span>`;
 
   const hintCell = editing
-    ? `<input class="adm-inline-input" style="width:100%;max-width:400px;" placeholder="Optional hint text for participants" value="${escHtml(c.hint || '')}" id="ch-hint-${c.id}">`
+    ? `<div style="display:flex;gap:12px;align-items:center;width:100%;"><input class="adm-inline-input" style="flex:1;min-width:0;max-width:400px;" placeholder="Optional hint text for participants" value="${escHtml(c.hint || '')}" id="ch-hint-${c.id}"><input class="adm-inline-input" type="number" min="0" max="1000" style="width:90px;" placeholder="${_hintPenaltyDefault}" title="Hint penalty in points. Blank = default (${_hintPenaltyDefault})" value="${c.hint_penalty ?? ''}" id="ch-hintpen-${c.id}"><span style="color:var(--text-muted);font-size:11px;">pts penalty</span></div>`
     : (c.hint ? `<span class="challenge-read-value" style="color:var(--text-secondary)">${escHtml(c.hint)}</span>` : `<span style="color:var(--text-muted)">—</span>`);
 
   const editBtn = editing
@@ -2166,7 +2194,7 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
     <td class="challenge-value-cell">${pointsCell}</td>
   </tr>
   <tr class="challenge-admin-row challenge-group-end ch-detail-${c.id}" style="display:none;">
-    <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-5 pts)</span></td>
+    <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-${c.hint_penalty ?? _hintPenaltyDefault} pts)</span></td>
     <td class="challenge-value-cell">${hintCell}</td>
   </tr>`;
 }
@@ -2215,6 +2243,7 @@ async function updateChallenge(id) {
     flag: val(`#ch-flag-${id}`).trim(),
     points: Number.isFinite(points) && points >= 0 ? points : 50,
     hint: val(`#ch-hint-${id}`) || null,
+    hint_penalty: val(`#ch-hintpen-${id}`) === '' ? null : parseInt(val(`#ch-hintpen-${id}`), 10),
     visible: cached?.visible ?? 1,
   };
   if (!body.title.trim()) { showAlert('Missing title', 'The challenge needs a title.'); return; }
@@ -2321,8 +2350,8 @@ function toggleNewChallengeRow() {
       </td>
     </tr>
     <tr class="challenge-admin-row">
-      <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-5 pts)</span></td>
-      <td class="challenge-value-cell"><textarea class="adm-inline-input" id="new-ch-hint" placeholder="Optional hint text for participants" rows="1" style="width:100%;resize:none;overflow:hidden;" ${autoGrow}></textarea></td>
+      <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-${_hintPenaltyDefault} pts)</span></td>
+      <td class="challenge-value-cell"><div style="display:flex;gap:12px;align-items:flex-start;width:100%;"><textarea class="adm-inline-input" id="new-ch-hint" placeholder="Optional hint text for participants" rows="1" style="flex:1;min-width:0;resize:none;overflow:hidden;" ${autoGrow}></textarea><input class="adm-inline-input" type="number" min="0" max="1000" id="new-ch-hintpen" style="width:90px;" placeholder="${_hintPenaltyDefault}" title="Blank = default (${_hintPenaltyDefault})"><span style="color:var(--text-muted);font-size:11px;padding-top:7px;">pts penalty</span></div></td>
     </tr>
     <tr class="challenge-admin-row challenge-group-end">
       <td colspan="2" style="padding:10px 12px;text-align:right;border-top:1px solid var(--border);">
@@ -2390,6 +2419,7 @@ async function addChallenge() {
     flag: get('new-ch-flag'),
     points: Number.isFinite(points) && points >= 0 ? points : 50,
     hint: get('new-ch-hint') || null,
+    hint_penalty: get('new-ch-hintpen') === '' ? null : parseInt(get('new-ch-hintpen'), 10),
     visible: 0,
   };
   if (!body.flag) { showAlert('Missing flag', 'Set the expected answer before creating the challenge.'); return; }
@@ -2569,6 +2599,8 @@ function closeLeaderboardPanel() {
 
 let participantTotalPoints = 0;
 let participantAttemptCount = 0;
+let participantPenaltyTotal = 0;
+let _hintPenalty = 5;
 
 let _ctfState = 'stop';
 
@@ -2583,6 +2615,8 @@ async function loadParticipantChallenges() {
     participantChallenges = data.challenges || data;
     participantTotalPoints = data.total_points ?? 0;
     participantAttemptCount = data.attempt_count ?? 0;
+    participantPenaltyTotal = data.penalty_total ?? participantAttemptCount * 5;
+    _hintPenalty = data.hint_penalty ?? 5;
     renderCTFStateButtons(_ctfState);
     renderParticipantChallenges();
   } catch (e) {
@@ -2591,11 +2625,12 @@ async function loadParticipantChallenges() {
 }
 
 function confirmUseHint(challengeId) {
+  const cost = participantChallenges.find(x => x.id === challengeId)?.hint_cost ?? _hintPenalty;
   showConfirm({
     title: 'Use hint?',
     subtitle: 'This action cannot be undone',
-    body: 'Using this hint will cost you -5 points. This action cannot be undone.',
-    okLabel: 'Use hint (-5 pts)',
+    body: `Using this hint will cost you -${cost} points. This action cannot be undone.`,
+    okLabel: `Use hint (-${cost} pts)`,
     onOk: () => useHint(challengeId),
   });
 }
@@ -2749,8 +2784,8 @@ function updateChallengesProgressBar(completed, total) {
   }
   if (total === 0) { bar.innerHTML = ''; return; }
   const pct = Math.round((completed / total) * 100);
-  const penaltyLine = participantAttemptCount > 0
-    ? `<span style="color:#ef4444;">−${participantAttemptCount * 5} pts penalties</span>`
+  const penaltyLine = participantPenaltyTotal > 0
+    ? `<span style="color:#ef4444;">−${participantPenaltyTotal} pts penalties</span>`
     : '';
   bar.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-secondary);margin-bottom:6px;">
@@ -2799,6 +2834,7 @@ async function checkChallenge(id, btn) {
       launchFireworks();
     } else {
       participantAttemptCount++;
+      participantPenaltyTotal += 5;
       participantTotalPoints -= 5;
       // Update retries_left in local cache
       const idx = participantChallenges.findIndex(c => c.id === id);

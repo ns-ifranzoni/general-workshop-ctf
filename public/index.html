@@ -979,6 +979,23 @@
         </div>
         <div class="adm-card settings-console-card settings-console-card--utility">
           <div class="adm-card-header">
+            <span class="adm-card-title">Hint penalty</span>
+          </div>
+          <div class="settings-card-body">
+            <p class="settings-utility-copy">Points a participant loses when they use a hint. Each challenge can override it in the Challenges tab; leaving it blank there uses this default.</p>
+            <div class="field-group">
+              <input type="number" id="hint-penalty-input" min="0" max="1000" value="5" onkeydown="if(event.key==='Enter')saveHintPenalty()" />
+            </div>
+            <div class="settings-compact-actions">
+              <span id="hint-penalty-msg" class="settings-inline-status"></span>
+              <button class="btn-primary btn-icon" onclick="saveHintPenalty()">
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="adm-card settings-console-card settings-console-card--utility">
+          <div class="adm-card-header">
             <span class="adm-card-title">Demo Data</span>
           </div>
           <div class="settings-card-body">

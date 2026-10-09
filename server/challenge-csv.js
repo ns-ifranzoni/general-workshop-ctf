@@ -1,7 +1,9 @@
 // Challenge CSV format shared by import, export and the bundled template:
-//   seq,title,description,flag,points,hint,visible
+//   seq,title,description,flag,points,hint,visible,hint_penalty
+// hint_penalty is optional (blank = use the global default); CSVs without the
+// column still import.
 
-const CSV_HEADER = 'seq,title,description,flag,points,hint,visible';
+const CSV_HEADER = 'seq,title,description,flag,points,hint,visible,hint_penalty';
 
 // RFC 4180-style parser: quoted fields may contain commas, "" and newlines.
 // Returns an array of objects keyed by the lowercased header names.
@@ -14,6 +16,7 @@ function parseCsv(text) {
     if (inQuotes) {
       if (ch === '"' && src[i + 1] === '"') { field += '"'; i++; }
       else if (ch === '"') inQuotes = false;
+      else if (ch === '\r') { if (src[i + 1] === '\n') i++; field += '\n'; } // Excel CRLF/CR inside a cell -> LF
       else field += ch;
     } else if (ch === '"') {
       inQuotes = true;
@@ -47,6 +50,7 @@ function challengeFromCsvRow(row) {
     flag: row.flag || null,
     points: Number.isFinite(points) && points >= 0 ? points : 50,
     hint: row.hint || null,
+    hint_penalty: (() => { const n = parseInt(row.hint_penalty, 10); return Number.isFinite(n) && n >= 0 ? n : null; })(),
     visible: row.visible === undefined || row.visible === '' ? 1 : (parseInt(row.visible, 10) ? 1 : 0),
   };
 }
@@ -54,7 +58,7 @@ function challengeFromCsvRow(row) {
 const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 function challengeToCsvLine(c, i) {
-  return [i + 1, esc(c.title), esc(c.description), esc(c.flag), c.points, esc(c.hint), c.visible].join(',');
+  return [i + 1, esc(c.title), esc(c.description), esc(c.flag), c.points, esc(c.hint), c.visible, c.hint_penalty ?? ''].join(',');
 }
 
 module.exports = { CSV_HEADER, parseCsv, challengeFromCsvRow, challengeToCsvLine };
