@@ -2963,10 +2963,93 @@ async function openChangelog() {
 // ── About ──
 async function loadAboutVersion() {
   const el = document.getElementById('about-version-local');
+  const msg = document.getElementById('about-update-msg');
+  const updateBtn = document.getElementById('about-update-btn');
   if (!el) return;
   try {
-    const res = await apiFetch('/api/admin/version');
+    const res = await apiFetch('/api/admin/update/version');
     const data = res.ok ? await res.json() : null;
-    el.textContent = data?.version || 'unknown';
+    el.textContent = data?.local || 'unknown';
+    if (updateBtn) updateBtn.style.display = 'none';
+    if (msg) {
+      msg.className = 'about-update-msg';
+      msg.textContent = '';
+    }
   } catch { el.textContent = 'unknown'; }
+}
+
+async function checkForUpdates() {
+  const btn = document.getElementById('about-check-btn');
+  const msg = document.getElementById('about-update-msg');
+  const updateBtn = document.getElementById('about-update-btn');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  msg.className = 'about-update-msg';
+  msg.textContent = '';
+  try {
+    const res = await apiFetch('/api/admin/update/check');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    document.getElementById('about-version-local').textContent = data.local;
+    if (data.upToDate) {
+      msg.className = 'about-update-msg about-update-msg--ok';
+      msg.textContent = '✓ Already up to date.';
+      updateBtn.style.display = 'none';
+    } else {
+      msg.className = 'about-update-msg about-update-msg--warn';
+      msg.textContent = `Update available: ${data.remote}`;
+      updateBtn.style.display = '';
+    }
+  } catch (e) {
+    msg.className = 'about-update-msg about-update-msg--error';
+    msg.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg> Check for updates';
+  }
+}
+
+async function applyUpdate() {
+  showConfirm({
+    title: 'Apply update',
+    subtitle: 'The server will restart automatically',
+    body: 'The app will pull the latest changes from GitHub, install dependencies, and restart. This takes about 30 seconds. The page will reload automatically when the server is back.',
+    okLabel: 'Update & restart',
+    onOk: async () => {
+      const btn = document.getElementById('about-update-btn');
+      const checkBtn = document.getElementById('about-check-btn');
+      const msg = document.getElementById('about-update-msg');
+      btn.style.display = 'none';
+      if (checkBtn) checkBtn.disabled = true;
+      msg.className = 'about-update-msg about-update-msg--info';
+      msg.textContent = 'Pulling latest changes…';
+      try {
+        await apiFetch('/api/admin/update/apply', { method: 'POST' });
+      } catch { /* server may close connection before responding */ }
+
+      // Poll until server is back, then reload
+      msg.textContent = 'Server is restarting…';
+      const MAX_WAIT = 60;
+      let elapsed = 0;
+      const poll = setInterval(async () => {
+        elapsed += 2;
+        msg.textContent = `Server is restarting… (${elapsed}s)`;
+        try {
+          const r = await fetch('/api/health');
+          if (r.ok) {
+            clearInterval(poll);
+            msg.style.color = 'var(--accent)';
+            msg.textContent = '✓ Server back online — reloading…';
+            setTimeout(() => location.reload(), 800);
+          }
+        } catch { /* still down, keep polling */ }
+        if (elapsed >= MAX_WAIT) {
+          clearInterval(poll);
+          msg.style.color = '#ef4444';
+          msg.textContent = `Server did not restart after ${MAX_WAIT}s — run ./update.sh manually in terminal.`;
+          if (checkBtn) checkBtn.disabled = false;
+        }
+      }, 2000);
+    }
+  });
 }
