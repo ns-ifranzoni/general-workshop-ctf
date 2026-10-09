@@ -75,45 +75,58 @@ git pull
 docker compose up -d --build
 ```
 
-Your data lives in `./data` and is kept across rebuilds.
+Your data lives in `./data` and is kept across rebuilds. On a server installed
+with `install.sh`, simply run `sudo ./install.sh` again (see below).
 
 ---
 
-## Deploy on AWS EC2 (Amazon Linux)
+## Install on a server (Amazon Linux 2023 / Ubuntu)
 
-`scripts/install-ctf-amazonlinux.sh` installs everything from scratch on a
-fresh Amazon Linux 2023 or 2 instance (x86_64 or arm64) and publishes the
-portal over **HTTPS** with an automatic Let's Encrypt certificate:
+`install.sh` is an unattended installer. It detects the OS (Amazon Linux 2023,
+Ubuntu 22.04/24.04 or Debian; x86_64 and arm64), installs Docker, Compose and
+Buildx, clones this repo into `/opt/general-workshop-ctf`, starts the app bound
+to `127.0.0.1:3002` and puts **Caddy** in front of it on 80/443:
 
 ```
-Internet --443/80--> Caddy (container, Let's Encrypt) --> 127.0.0.1:3002 (app)
+Internet --443/80--> Caddy (host, systemd) --> 127.0.0.1:3002 (container)
 ```
 
-The script installs Docker, Compose and Buildx, clones this repo, starts the
-app bound to localhost only, and runs Caddy as the HTTPS reverse proxy.
-
-**Before running it**
-
-1. **The domain you choose must already exist** and its DNS **A record** must
-   point to the instance's public IP. Without it Let's Encrypt cannot validate
-   the domain, no certificate is issued and the installation fails to serve HTTPS.
-2. The instance's Security Group must allow inbound **TCP 80 and 443** from the
-   Internet (80 is needed for the Let's Encrypt validation and the HTTP to HTTPS redirect).
-
-**Run it** as `ec2-user` (do **not** use `sudo`; the script elevates where needed):
+**Before running it:** open inbound **TCP 80 and 443** in the instance's Security Group.
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/ns-ifranzoni/general-workshop-ctf/main/scripts/install-ctf-amazonlinux.sh
-chmod +x install-ctf-amazonlinux.sh
-./install-ctf-amazonlinux.sh <domain> <email>
-# e.g. ./install-ctf-amazonlinux.sh ctf.example.com admin@example.com
+curl -fsSL https://raw.githubusercontent.com/ns-ifranzoni/general-workshop-ctf/main/install.sh -o install.sh
+sudo bash install.sh
 ```
 
-`<email>` is used by Let's Encrypt for the certificate. When it finishes, open
-`https://<domain>` and sign in as `ADMIN-2026` with an empty password (the portal
-asks you to set one). The script is idempotent: re-running it pulls the latest
-code and rebuilds. Logs: `sudo docker logs -f caddy` (proxy) and
-`cd ~/general-workshop-ctf && sudo docker compose logs -f` (app).
+By default the portal is served over HTTPS with a **self-signed certificate**
+(the browser shows a warning once) and works with the bare public IP or the
+EC2 hostname. When it finishes it prints the URL; open it and sign in as
+**`ADMIN-2026`** with an empty password. The portal asks you to set one.
+
+**Real certificate (Let's Encrypt) with your own domain.** Create a DNS **A
+record** pointing to the server's public IP first, then:
+
+```bash
+sudo TLS_MODE=acme DOMAIN=ctf.example.com LE_EMAIL=you@example.com bash install.sh
+```
+
+Re-running the script is safe: it pulls the latest code and rebuilds, and
+`./data` is kept. Options (environment variables, all optional):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DOMAIN` | auto-detected on EC2 | Public name or IP shown at the end and used as TLS name. |
+| `TLS_MODE` | `internal` | `internal` = self-signed; `acme` = Let's Encrypt (needs `DOMAIN` + `LE_EMAIL`). |
+| `LE_EMAIL` | | Email for Let's Encrypt (`TLS_MODE=acme`). |
+| `ENABLE_PROXY` | `1` | `0` skips Caddy and publishes the app directly on `0.0.0.0:APP_PORT`. |
+| `HTTP_MODE` | `redirect` | `plain` serves the app over HTTP on port 80 too. |
+| `APP_DIR` / `APP_PORT` | `/opt/general-workshop-ctf` / `3002` | Install folder and internal port. |
+| `REPO_URL` / `BRANCH` | this repo / `main` | Source to deploy. |
+| `GITHUB_TOKEN` | | Only needed if you deploy from a private fork. |
+| `SYSTEM_UPGRADE` | `0` | `1` also runs a full OS package upgrade. |
+
+Logs: `cd /opt/general-workshop-ctf && sudo docker compose logs -f` (app) and
+`sudo journalctl -u caddy -f` (proxy).
 
 ---
 
@@ -163,20 +176,22 @@ presses **Check**, and the answer is compared with the challenge's **flag**.
 - The flag is **never sent to the participant's browser**.
 
 Each challenge has a title, a description, a flag, points (default 50), an
-optional hint and a visibility toggle.
+optional hint (with an optional penalty of its own) and a visibility toggle.
 
 ### CSV format
 
 Used by import, export and the bundled template:
 
 ```csv
-seq,title,description,flag,points,hint,visible
-1,"HTTPS","Which TCP port does HTTPS use by default?","443",50,"HTTP uses port 80.",1
-2,"Warm-up","Type your own username.","%username",25,"",1
+seq,title,description,flag,points,hint,visible,hint_penalty
+1,"HTTPS","Which TCP port does HTTPS use by default?","443",50,"HTTP uses port 80.",1,
+2,"Warm-up","Type your own username.","%username",25,"",1,
 ```
 
 - Quoted fields may contain commas, quotes (`""`) and line breaks.
 - `visible` defaults to `1` when empty; `points` defaults to `50`.
+- `hint_penalty` is optional: blank uses the global default (see *Scoring rules*). CSVs without the column still import.
+- Excel exports (CRLF line breaks inside cells) and a UTF-8 BOM are handled.
 - **Import** appends to the existing challenges. **Load template** replaces all
   challenges (and all progress) with `templates/challenges.csv`.
 
@@ -186,11 +201,11 @@ seq,title,description,flag,points,hint,visible
 
 - A challenge awards its points **once**, on the first correct answer.
 - Every **wrong answer** costs **−5 points**.
-- Every **hint** used costs **−5 points** (once per challenge).
+- Every **hint** used costs the **hint penalty** (once per challenge): **−5 by default**, configurable in **Global Settings → Hint penalty**, and each challenge can override it (blank = use the default).
 - After **5 wrong answers** on a challenge it locks for **5 minutes**. After
   the cooldown the retry counter starts again; penalties already earned are
   kept.
-- **Total = points earned − 5 × (wrong answers + hints used)**.
+- **Total = points earned − 5 × wrong answers − the penalty of every hint used**.
 - Ties are broken by who reached the score first.
 
 ---
@@ -203,7 +218,7 @@ seq,title,description,flag,points,hint,visible
 | **Control Center** | CTF state, leaderboard visibility, registration, timer, registration code, award ceremony, fullscreen leaderboard, reset CTF progress. |
 | **Participants** | Progress per participant, **Detail** timeline (completions, hints and wrong answers with the submitted text), reset, delete, bulk create. |
 | **Challenges** | Create, edit, reorder, show/hide, delete, CSV import/export, load template. |
-| **Global Settings** | Workshop name, demo data, clear database, factory reset. |
+| **Global Settings** | Workshop name, hint penalty, demo data, clear database, factory reset. |
 | **Admins** | Create admins (random password shown once), reset passwords, API tokens, disable/delete. |
 | **About** | Version and changelog. |
 
@@ -266,6 +281,7 @@ To change the port, edit both values in `docker-compose.yml`:
 ## Project structure
 
 ```
+├── install.sh               # unattended server installer (Docker + Caddy HTTPS)
 ├── docker-compose.yml       # container name, port, data volume
 ├── Dockerfile
 ├── server/

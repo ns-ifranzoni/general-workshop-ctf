@@ -53,7 +53,8 @@ db.exec(`
   );
 
   -- Failed answers (is_hint = 0, with the submitted text in answer) and hint
-  -- penalties (is_hint = 1). Each row costs the participant 5 points.
+  -- penalties (is_hint = 1). A failed answer costs 5 points; a hint costs the
+  -- challenge's hint_penalty, or the global hint_penalty setting when NULL.
   -- retry_cleared = 1 marks failed answers already counted towards a cooldown:
   -- they keep their penalty but no longer count against the retry limit.
   CREATE TABLE IF NOT EXISTS challenge_attempts (
@@ -84,6 +85,8 @@ db.exec(`
 for (const ddl of [
   'ALTER TABLE challenge_attempts ADD COLUMN answer TEXT',
   'ALTER TABLE challenge_attempts ADD COLUMN retry_cleared INTEGER NOT NULL DEFAULT 0',
+  // Per-challenge hint penalty override (NULL = use the global hint_penalty setting)
+  'ALTER TABLE challenges ADD COLUMN hint_penalty INTEGER',
 ]) {
   try { db.exec(ddl); } catch { /* column already exists */ }
 }
@@ -99,6 +102,7 @@ function seedSetting(key, value) {
 }
 
 seedSetting('max_retries', '5');
+seedSetting('hint_penalty', '5');
 seedSetting('ctf_timer_total', String(DEFAULT_CTF_TIMER_SECONDS));
 seedSetting('ctf_timer_remaining', String(DEFAULT_CTF_TIMER_SECONDS));
 seedSetting('ctf_timer_started_at', '');
