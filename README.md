@@ -75,7 +75,7 @@ git pull
 docker compose up -d --build
 ```
 
-Your data lives in `./data` and is kept across rebuilds. On a server installed
+You can also use **About → Check for updates → Update now** in the admin panel: it pulls the latest release inside the container and restarts. It does not rebuild the image, so after a release that changes dependencies or the Dockerfile use the commands above. Your data lives in `./data` and is kept across rebuilds. On a server installed
 with `install.sh`, simply run `sudo ./install.sh` again (see below).
 
 ---

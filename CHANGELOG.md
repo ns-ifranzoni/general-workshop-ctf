@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.1
+- **Feature:** **About** has **Check for updates** and **Update now**. The check compares the running version with the latest GitHub Release; *Update now* pulls the latest code inside the container, installs dependencies and restarts the app (`restart: unless-stopped` brings it back), and the page reloads when the server is up. The Docker image now includes `git` for this. To rebuild the image (dependency or Dockerfile changes), use `docker compose up -d --build` or re-run `install.sh`.
+
 ## v1.2.0
 - **Feature:** the hint penalty is now configurable. **Global Settings → Hint penalty** sets the default (5, stored as `hint_penalty`), and each challenge can override it with its own *pts penalty* next to the hint text (blank = use the default). It is applied to the participant total, history, leaderboard, podium and dashboard ranking; the "Use hint" dialog shows the effective cost. Wrong answers still cost 5. The CSV export/import gains an optional `hint_penalty` column (older CSVs still import).
 - **Fix:** the authentication rate limits are sized for a classroom where almost every participant shares one public IP. Only failed attempts count, but a whole room can easily trip the old caps: the per-IP ceiling on login goes from 100 to 2000 failures per 15 min, registration from 15 to 1000 and admin setup from 10 to 50. The per-account login limit (10 failures per username) is unchanged.

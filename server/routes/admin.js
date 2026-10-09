@@ -423,4 +423,66 @@ router.get('/version', requireAdmin, (req, res) => {
   res.json({ version: 'v' + require('../../package.json').version });
 });
 
+// ── Update ────────────────────────────────────────────────
+const { execSync, spawn } = require('child_process');
+const UPDATE_REPO = 'ns-ifranzoni/general-workshop-ctf';
+
+function isDocker() {
+  try { return fs.existsSync('/.dockerenv'); } catch { return false; }
+}
+
+function getLocalVersion() {
+  // package.json is bumped per release and refreshed by `git pull`.
+  try {
+    const v = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')).version;
+    if (v) return 'v' + v;
+  } catch {}
+  return 'unknown';
+}
+
+router.get('/update/version', requireAdmin, (req, res) => {
+  res.json({ local: getLocalVersion() });
+});
+
+router.get('/update/check', requireAdmin, async (req, res) => {
+  try {
+    const local = getLocalVersion();
+    const ghRes = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
+      headers: { 'User-Agent': 'general-workshop-ctf' }, signal: AbortSignal.timeout(8000)
+    });
+    if (!ghRes.ok) return res.status(500).json({ error: `GitHub API error: ${ghRes.status}` });
+    const data = await ghRes.json();
+    const remote = data.tag_name;
+    const upToDate = local === remote;
+    const changelog = upToDate ? [] : (data.body || '').split('\n').filter(l => l.trim().startsWith('-')).map(l => l.trim());
+    res.json({ upToDate, local, remote, changelog, docker: isDocker() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/update/apply', requireAdmin, (req, res) => {
+  const appRoot = path.resolve(__dirname, '../..');
+  try {
+    execSync('git pull origin main', { cwd: appRoot, timeout: 60000 });
+    execSync('git fetch --tags --force origin', { cwd: appRoot, timeout: 30000 });
+    execSync('npm install --omit=dev', { cwd: appRoot, timeout: 120000 });
+    res.json({ ok: true });
+    setTimeout(() => {
+      if (isDocker()) {
+        // restart: unless-stopped relaunches the container with the updated code
+        process.exit(0);
+      } else {
+        const child = spawn(process.execPath, [path.join(appRoot, 'server/index.js')], {
+          detached: true, stdio: 'ignore', cwd: appRoot, env: { ...process.env }
+        });
+        child.unref();
+        process.exit(0);
+      }
+    }, 500);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

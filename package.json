@@ -1,6 +1,6 @@
 {
   "name": "general-workshop-ctf",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Self-hosted Capture the Flag portal for hands-on workshops",
   "main": "server/index.js",
   "license": "MIT",
